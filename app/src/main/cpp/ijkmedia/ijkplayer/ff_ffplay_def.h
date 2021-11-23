@@ -158,20 +158,20 @@ typedef struct GetImgInfo {
 } GetImgInfo;
 
 typedef struct MyAVPacketList {
-    AVPacket pkt;
-    struct MyAVPacketList *next;
-    int serial;
+    AVPacket pkt;                   //解封装后的数据
+    struct MyAVPacketList *next;    //下一个节点
+    int serial;                     //序列号
 } MyAVPacketList;
 
 typedef struct PacketQueue {
-    MyAVPacketList *first_pkt, *last_pkt;
-    int nb_packets;
-    int size;
-    int64_t duration;
-    int abort_request;
-    int serial;
-    SDL_mutex *mutex;
-    SDL_cond *cond;
+    MyAVPacketList *first_pkt, *last_pkt;   //队首、队尾
+    int nb_packets; //队列中一共有多少个节点
+    int size;   //队列中所有节点字节总数，用于计算cache大小
+    int64_t duration;   //队列所有节点的合计时长
+    int abort_request;  //是否要中止队列操作，用于安全快速退出播放
+    int serial; //队列序列号，和MyPackageList的serial作用相同，但改变的时序稍微有点不同
+    SDL_mutex *mutex;   //用于维护PacketQueue的多线程安全（SDL_mutex可以按pthread_mutex_t理解）
+    SDL_cond *cond; //用于读、写线程相互通知（SDL_cond可以按pthread_mutex_t理解）
     MyAVPacketList *recycle_pkt;
     int recycle_count;
     int alloc_count;
@@ -210,8 +210,8 @@ typedef struct Clock {
 
 /* Common struct for handling all types of decoded data and allocated render buffers. */
 typedef struct Frame {
-    AVFrame *frame;
-    AVSubtitle sub;
+    AVFrame *frame; //视频或音频的解码数据
+    AVSubtitle sub; //解码的字幕数据
     int serial;
     double pts;           /* presentation timestamp for the frame */
     double duration;      /* estimated duration of the frame */
@@ -230,16 +230,16 @@ typedef struct Frame {
 } Frame;
 
 typedef struct FrameQueue {
-    Frame queue[FRAME_QUEUE_SIZE];
-    int rindex;
-    int windex;
-    int size;
-    int max_size;
-    int keep_last;
-    int rindex_shown;
+    Frame queue[FRAME_QUEUE_SIZE];  //队列元素，用数组模拟队列
+    int rindex; //读指针
+    int windex; //写指针
+    int size;   //当前存储的节点个数（当前已写入的节点个数）
+    int max_size;   //最大允许存储的节点个数
+    int keep_last;  //是否要保存最后一个读节点
+    int rindex_shown;   //当前节点是否已显示
     SDL_mutex *mutex;
     SDL_cond *cond;
-    PacketQueue *pktq;
+    PacketQueue *pktq;  //关联的PacketQueue
 } FrameQueue;
 
 enum {
